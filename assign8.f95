@@ -1,20 +1,20 @@
 PROGRAM A8
     IMPLICIT NONE
 
-    ! Base (abstract) expression type
+    !!! EXPRC START
     TYPE, ABSTRACT :: ExprC
         ! empty 
     END TYPE ExprC
 
     ! Number
-    TYPE, EXTENDS(ExprC) :: NumC
+    TYPE, EXTENDS(ExprC) :: numC
         REAL :: number
-    END TYPE NumC
+    END TYPE numC
 
     ! Identifier
-    TYPE, EXTENDS(ExprC) :: IDc
+    TYPE, EXTENDS(ExprC) :: idC
         CHARACTER(LEN=1) :: symbol
-    END TYPE IDc
+    END TYPE idC
 
     ! Function application 
     TYPE, EXTENDS(ExprC) :: appC
@@ -27,9 +27,9 @@ PROGRAM A8
     END TYPE boolC
 
     ! String 
-    TYPE, EXTENDS(ExprC) :: stringC
+    TYPE, EXTENDS(ExprC) :: strC
         CHARACTER(LEN=25) :: value
-    END TYPE stringC
+    END TYPE strC
 
     ! IF expression node
     TYPE, EXTENDS(ExprC) :: ifC
@@ -38,8 +38,50 @@ PROGRAM A8
         CLASS(ExprC), ALLOCATABLE :: else_branch
     END TYPE ifC
 
+    !!! EXPRC END
+
+    !!! VALUE START
+    TYPE, ABSTRACT :: Value
+        ! empty 
+    END TYPE Value
+
+    ! Number
+    TYPE, EXTENDS(Value) :: numV
+        REAL :: number
+    END TYPE numV
+
+    ! Boolean 
+    TYPE, EXTENDS(Value) :: boolV
+        LOGICAL :: value
+    END TYPE boolV
+
+    ! String 
+    TYPE, EXTENDS(Value) :: strV
+        CHARACTER(LEN=25) :: value
+    END TYPE strV
+
+    !!! VALUE END
+
+    !!! INTERP START
+    Value FUNCTION interp(expr, env)
+        ! IMPLICIT NONE?
+        EXPRC, INTENT(IN) :: expr
+        ENV, INTENT(IN) :: env
+
+        SELECT CASE (expr)
+            CASE(numC)
+
+            CASE (idC)
+
+            CASE (boolC)
+
+            CASE (strC)
+
+            CASE (ifC)
+
+    !!! INTERP END
     ! Now we can have executable code
-    print *, "I hate my life"
+    print *, "Life is worth living"
 
     ! ... rest of program 
 
