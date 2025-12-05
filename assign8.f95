@@ -33,7 +33,7 @@ PROGRAM A8
 
     ! IF expression node
     TYPE, EXTENDS(ExprC) :: ifC
-        CLASS(ExprC), ALLOCATABLE :: test
+        CLASS(ExprC), ALLOCATABLE :: if_branch
         CLASS(ExprC), ALLOCATABLE :: then_branch
         CLASS(ExprC), ALLOCATABLE :: else_branch
     END TYPE ifC
@@ -66,24 +66,44 @@ PROGRAM A8
     RECURSIVE FUNCTION INTERP(expr, env) RESULT(val)
         CLASS(ExprC), INTENT(IN) :: expr
         ENV, INTENT(IN) :: env
-        CLASS(Value) :: val
+        CLASS(Value), ALLOCATABLE :: val
 
         SELECT TYPE (expr)
         
         TYPE IS (numC)
-            val%num :: expr%num
+            ALLOCATE(numV :: val)
+            val = numV(expr%num)
 
         TYPE IS (idC)
             ! need lookup function
             
         TYPE IS (boolC)
-            val%bool :: expr%bool
+            ALLOCATE(boolV :: val)
+            val = boolV(expr%bool)
 
         TYPE IS (strC)
-            val%str :: val%str
+            ALLOCATE(strV :: val)
+            val = strV(expr%str)
 
         TYPE IS (ifC)
+            ! interp if statement
+            CLASS(Value), ALLOCATABLE :: if_statement
+            if_statement => interp(expr%if_branch, env)
 
+            ! make sure if statement is a boolV
+            SELECT TYPE(if_statement)
+
+            TYPE IS (boolV)
+                IF (if_statement%bool) THEN
+                    val = interp(expr%then_branch, env)
+                ELSE
+                    val = interp(expr%else_branch, env)
+                END IF
+
+            END SELECT
+
+        END SELECT
+        
     END FUNCTION INTERP
 
     !!! INTERP END
