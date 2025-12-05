@@ -13,7 +13,7 @@ MODULE A8
 
     ! Identifier
     TYPE, EXTENDS(ExprC) :: idC
-        CHARACTER(LEN=1) :: symbol
+        CHARACTER(LEN=25) :: symbol
     END TYPE idC
 
     ! Function application 
@@ -37,6 +37,30 @@ MODULE A8
         CLASS(ExprC), ALLOCATABLE :: then_branch
         CLASS(ExprC), ALLOCATABLE :: else_branch
     END TYPE ifC
+
+        ! Lambda expression node
+    ! Represents: { lambda (params...) : body }
+    TYPE, EXTENDS(ExprC) :: lambdaC
+        INTEGER :: num_params = 0
+        ! Names of the parameters in order
+        CHARACTER(LEN=16), DIMENSION(:), ALLOCATABLE :: params
+        ! Body of the lambda
+        CLASS(ExprC), ALLOCATABLE :: body
+    END TYPE lambdaC
+
+    ! Let expression node
+    ! Represents: { let { [id = expr]* } in body end }
+    TYPE, EXTENDS(ExprC) :: letC
+        ! Number of bindings
+        INTEGER :: num_bindings = 0
+        ! Names of the bound variables: [a, b, ...]
+        CHARACTER(LEN=16), DIMENSION(:), ALLOCATABLE :: names
+        ! Right-hand side expressions: [expr_a, expr_b, ...]
+        CLASS(ExprC), DIMENSION(:), ALLOCATABLE :: rhs
+        ! Body of the let expression
+        CLASS(ExprC), ALLOCATABLE :: body
+    END TYPE letC
+
 
     !!! EXPRC END
 
@@ -63,15 +87,67 @@ MODULE A8
 
     !!! VALUE END
 
-     !!! define env (dummy for now)
+     !!! define env 
+ 
+    !!! VALUE END
+
+    ! A single binding: name -> value
+    TYPE :: Binding
+        CHARACTER(LEN=16) :: name
+        CLASS(Value), ALLOCATABLE :: val
+    END TYPE Binding
+
+    ! Environment: simple stack of up to 100 bindings
     TYPE :: Environment
-        ! empty
+        INTEGER :: size = 0
+        TYPE(Binding), DIMENSION(100) :: bindings  ! simple fixed-capacity env
     END TYPE Environment
 
-! need contains for functions
-CONTAINS 
+    ! need contains for functions
+CONTAINS
+
+
+! need contains for functions 
 
     !! start constructors
+
+    ! Look up a variable name in the environment
+    FUNCTION env_lookup(env, name) RESULT(val)
+        TYPE(Environment), INTENT(IN) :: env
+        CHARACTER(LEN=*), INTENT(IN) :: name
+        CLASS(Value), ALLOCATABLE :: val
+        INTEGER :: i
+
+        DO i = env%size, 1, -1   ! search from latest binding backward
+            IF (TRIM(env%bindings(i)%name) == TRIM(name)) THEN
+                ALLOCATE(val, SOURCE=env%bindings(i)%val)
+                RETURN
+            END IF
+        END DO
+
+        ! Not found: SHEQ error
+        error stop "SHEQ: unbound identifier: "//TRIM(name)
+    END FUNCTION env_lookup
+
+
+    ! Extend environment with one binding
+    FUNCTION env_extend(env, name, v) RESULT(new_env)
+        TYPE(Environment), INTENT(IN) :: env
+        CHARACTER(LEN=*), INTENT(IN) :: name
+        CLASS(Value), INTENT(IN) :: v
+        TYPE(Environment) :: new_env
+        INTEGER :: i
+
+        new_env = env
+        IF (new_env%size >= 100) THEN
+            error stop "SHEQ: environment overflow"
+        END IF
+
+        new_env%size = new_env%size + 1
+        i = new_env%size
+        new_env%bindings(i)%name = name
+        ALLOCATE(new_env%bindings(i)%val, SOURCE=v)
+    END FUNCTION env_extend
 
     ! numV constructor
     FUNCTION make_numV(n) RESULT(val)
@@ -110,7 +186,6 @@ CONTAINS
                 v%str = s
         END SELECT
     END FUNCTION make_strV
-
 
 
     !!! INTERP START
