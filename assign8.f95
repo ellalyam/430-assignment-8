@@ -8,7 +8,7 @@ PROGRAM A8
 
     ! Number
     TYPE, EXTENDS(ExprC) :: numC
-        REAL :: number
+        REAL :: num
     END TYPE numC
 
     ! Identifier
@@ -23,12 +23,12 @@ PROGRAM A8
 
     ! Boolean 
     TYPE, EXTENDS(ExprC) :: boolC
-        LOGICAL :: value
+        LOGICAL :: bool
     END TYPE boolC
 
     ! String 
     TYPE, EXTENDS(ExprC) :: strC
-        CHARACTER(LEN=25) :: value
+        CHARACTER(LEN=25) :: str
     END TYPE strC
 
     ! IF expression node
@@ -47,39 +47,48 @@ PROGRAM A8
 
     ! Number
     TYPE, EXTENDS(Value) :: numV
-        REAL :: number
+        REAL :: num
     END TYPE numV
 
     ! Boolean 
     TYPE, EXTENDS(Value) :: boolV
-        LOGICAL :: value
+        LOGICAL :: bool
     END TYPE boolV
 
     ! String 
     TYPE, EXTENDS(Value) :: strV
-        CHARACTER(LEN=25) :: value
+        CHARACTER(LEN=25) :: str
     END TYPE strV
 
     !!! VALUE END
 
     !!! INTERP START
-    Value FUNCTION interp(expr, env)
-        ! IMPLICIT NONE?
-        EXPRC, INTENT(IN) :: expr
+    RECURSIVE FUNCTION INTERP(expr, env) RESULT(val)
+        CLASS(ExprC), INTENT(IN) :: expr
         ENV, INTENT(IN) :: env
+        CLASS(Value) :: val
 
-        SELECT CASE (expr)
-            CASE(numC)
+        SELECT TYPE (expr)
+        
+        TYPE IS (numC)
+            val%num :: expr%num
 
-            CASE (idC)
+        TYPE IS (idC)
+            ! need lookup function
+            
+        TYPE IS (boolC)
+            val%bool :: expr%bool
 
-            CASE (boolC)
+        TYPE IS (strC)
+            val%str :: val%str
 
-            CASE (strC)
+        TYPE IS (ifC)
 
-            CASE (ifC)
+    END FUNCTION INTERP
 
     !!! INTERP END
+
+
     ! Now we can have executable code
     print *, "Life is worth living"
 
