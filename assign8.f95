@@ -161,6 +161,33 @@ CONTAINS
 
     !!! INTERP END
 
+    FUNCTION IS_NUMBER(input) RESULT(num)
+      CHARACTER(LEN=*), INTENT(IN) :: input
+      LOGICAL :: num
+      REAL :: dummy
+      INTEGER :: ierr
+      READ(input, *, IOSTAT=ierr) dummy
+      IF(ierr == 0) THEN
+        num = .TRUE. !it can be a number
+      ELSE 
+        num = .FALSE. !it cant be a number
+      END IF
+    END FUNCTION IS_NUMBER
+
+    ! PARSE
+    !Takes a string and returns an AST, only handles a string containing a number right now
+    FUNCTION PARSE(input) RESULT(expr)
+      CHARACTER(LEN=*), INTENT(IN) :: input
+      CLASS(ExprC), ALLOCATABLE :: expr
+      IF (IS_NUMBER(input)) THEN
+        ALLOCATE(numC :: expr)
+        SELECT TYPE(e => expr)
+        TYPE IS (numC)
+          READ(input, *) e%num
+        END SELECT
+      END IF
+    END FUNCTION PARSE
+
 
 END MODULE A8
 
@@ -169,14 +196,90 @@ MODULE TEST
     IMPLICIT NONE
 
 CONTAINS
-    subroutine tests()
-     TYPE(numC) :: test_numC
-     TYPE(numC) :: test2_numC
-     test_numC%num = 5
-     if (test_numC%num /= 5) then
-        error stop "SHEQTRAN: numC error"
-     endif
+  subroutine tests()
+    !data declarations
+    TYPE(numC) :: test_numC
+    TYPE(numV) :: reference_numV
+    TYPE(boolV) :: reference_boolV
+    TYPE(strV) :: reference_strV
+    CLASS(Value), ALLOCATABLE :: test_numV, test_boolV, test_strV
+    CLASS(ExprC), ALLOCATABLE :: then_branch, else_branch, if_branch
+    TYPE(Environment) :: env
 
+    !numC basic test
+    test_numC%num = 5
+    if (test_numC%num /= 5) then
+       error stop "SHEQTRAN: numC error"
+    endif
+    
+    !numV test 
+    test_numV = make_numV(3.0)
+       
+    IF (.NOT. SAME_TYPE_AS(test_numV, reference_numV)) THEN
+      error stop "SHEQTRAN: make_numV failed"
+    ENDIF
+  
+    !select type of test_numV
+    SELECT TYPE (v => test_numV) 
+    TYPE IS (numV) !only executes if the type is numV, this is necessary and acts like a cast
+        IF(v%num /= 3.0) THEN
+          error stop "SHEQTRAN: make_numV value error"
+       ! confirm value of numV, spoiler: it works
+       ! ELSE
+       !   print *, v%num
+        END IF
+    END SELECT
+
+    !make_boolV test
+    test_boolV = make_boolV(.TRUE.)
+    
+    IF (.NOT. SAME_TYPE_AS(test_boolV, reference_boolV)) THEN
+      error stop "SHEQTRAN: make_boolV failed - wrong type"
+    ENDIF
+  
+    SELECT TYPE (v => test_boolV) 
+    TYPE IS (boolV)
+        IF(.not. v%bool) THEN
+          error stop "SHEQTRAN: make_boolV .TRUE. value error"
+        END IF
+    END SELECT
+
+
+    !make_strV test
+    test_strV = make_strV("Test String")
+    
+    IF (.NOT. SAME_TYPE_AS(test_strV, reference_strV)) THEN
+      error stop "SHEQTRAN: make_strV failed - wrong type"
+    ENDIF
+  
+    SELECT TYPE (v => test_strV) 
+    TYPE IS (strV)
+        IF(v%str /= "Test String") THEN
+          error stop "SHEQTRAN: make_strV value error"
+        END IF
+    END SELECT
+
+    !test interp using numC
+    test_numC%num = 42.0
+    test_numV = INTERP(test_numC, env)
+    SELECT TYPE (v => test_numV) 
+    TYPE IS (numV)
+        IF(v%num /= 42.0) THEN
+          error stop "SHEQTRAN: INTERP numC error"
+        END IF
+    END SELECT
+
+    !test parse
+    SELECT TYPE (v => PARSE("4"))
+    TYPE IS (numC)
+      test_numC = v 
+    END SELECT
+
+    IF (test_numC%num /= 4) THEN
+      error stop "SHEQTRAN: PARSE numC error"
+    END IF
+
+    print *, "Tests ran successfully"
    end subroutine tests
  
 END MODULE TEST
