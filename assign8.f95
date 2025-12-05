@@ -40,6 +40,7 @@ PROGRAM A8
 
     !!! EXPRC END
 
+
     !!! VALUE START
     TYPE, ABSTRACT :: Value
         ! empty 
@@ -62,42 +63,91 @@ PROGRAM A8
 
     !!! VALUE END
 
-    !!! INTERP START
-    RECURSIVE FUNCTION INTERP(expr, env) RESULT(val)
-        CLASS(ExprC), INTENT(IN) :: expr
-        ENV, INTENT(IN) :: env
+     !!! define env (dummy for now)
+    TYPE :: Environment
+        ! empty
+    END TYPE Environment
+
+! need contains for functions
+CONTAINS 
+
+    !! start constructors
+
+    ! numV constructor
+    FUNCTION make_numV(n) RESULT(val)
+        REAL, INTENT(IN) :: n
         CLASS(Value), ALLOCATABLE :: val
 
-        SELECT TYPE (expr)
+        ALLOCATE(numV :: val)
+        SELECT TYPE (v => val)
+            TYPE IS (numV)
+                v%num = n
+        END SELECT
+    END FUNCTION make_numV
+
+
+    FUNCTION make_boolV(b) RESULT(val)
+        LOGICAL, INTENT(IN) :: b
+        CLASS(Value), ALLOCATABLE :: val
+
+        ALLOCATE(boolV :: val)
+        SELECT TYPE (v => val)
+            TYPE IS (boolV)
+                v%bool = b
+        END SELECT
+    END FUNCTION make_boolV
+
+    FUNCTION make_strV(s) RESULT(val)
+        CHARACTER(LEN=*), INTENT(IN) :: s
+        CLASS(Value), ALLOCATABLE :: val
+
+        ALLOCATE(strV :: val)
+        SELECT TYPE (v => val)
+            TYPE IS (strV)
+                v%str = s
+        END SELECT
+    END FUNCTION make_strV
+
+
+
+
+    !!! INTERP START
+    RECURSIVE FUNCTION INTERP(expr, env) RESULT(val)
+        IMPLICIT NONE
+
+        CLASS(ExprC), INTENT(IN) :: expr
+        TYPE(Environment), INTENT(IN) :: env
+        CLASS(Value), ALLOCATABLE :: val
+
+        CLASS(exprC), POINTER :: e
+
+        SELECT TYPE (e => expr)
         
         TYPE IS (numC)
-            ALLOCATE(numV :: val)
-            val = numV(expr%num)
+            val = make_numV(e%num)
 
         TYPE IS (idC)
             ! need lookup function
             
         TYPE IS (boolC)
-            ALLOCATE(boolV :: val)
-            val = boolV(expr%bool)
+            val = make_boolV(e%bool)
 
         TYPE IS (strC)
-            ALLOCATE(strV :: val)
-            val = strV(expr%str)
+            val = make_strV(e%str)
 
         TYPE IS (ifC)
             ! interp if statement
             CLASS(Value), ALLOCATABLE :: if_statement
-            if_statement => interp(expr%if_branch, env)
+            if_statement => interp(e%if_branch, env)
 
             ! make sure if statement is a boolV
             SELECT TYPE(if_statement)
 
             TYPE IS (boolV)
                 IF (if_statement%bool) THEN
-                    val = interp(expr%then_branch, env)
+                    val = interp(e%then_branch, env)
                 ELSE
-                    val = interp(expr%else_branch, env)
+                    val = interp(e%else_branch, env)
                 END IF
 
             END SELECT
@@ -110,8 +160,10 @@ PROGRAM A8
 
 
     ! Now we can have executable code
-    print *, "Life is worth living"
+    ! print *, "Life is worth living"
 
     ! ... rest of program 
 
 END PROGRAM A8
+
+
