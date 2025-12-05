@@ -1,4 +1,4 @@
-PROGRAM A8
+MODULE A8
     IMPLICIT NONE
 
     !!! EXPRC START
@@ -86,6 +86,7 @@ CONTAINS
     END FUNCTION make_numV
 
 
+    ! boolV constructor
     FUNCTION make_boolV(b) RESULT(val)
         LOGICAL, INTENT(IN) :: b
         CLASS(Value), ALLOCATABLE :: val
@@ -97,6 +98,8 @@ CONTAINS
         END SELECT
     END FUNCTION make_boolV
 
+
+    ! strV constructor
     FUNCTION make_strV(s) RESULT(val)
         CHARACTER(LEN=*), INTENT(IN) :: s
         CLASS(Value), ALLOCATABLE :: val
@@ -110,7 +113,6 @@ CONTAINS
 
 
 
-
     !!! INTERP START
     RECURSIVE FUNCTION INTERP(expr, env) RESULT(val)
         IMPLICIT NONE
@@ -120,6 +122,8 @@ CONTAINS
         CLASS(Value), ALLOCATABLE :: val
 
         CLASS(exprC), POINTER :: e
+
+        CLASS(Value), ALLOCATABLE :: if_statement
 
         SELECT TYPE (e => expr)
         
@@ -137,14 +141,13 @@ CONTAINS
 
         TYPE IS (ifC)
             ! interp if statement
-            CLASS(Value), ALLOCATABLE :: if_statement
-            if_statement => interp(e%if_branch, env)
+            if_statement = interp(e%if_branch, env)
 
             ! make sure if statement is a boolV
-            SELECT TYPE(if_statement)
+            SELECT TYPE (v => if_statement)
 
             TYPE IS (boolV)
-                IF (if_statement%bool) THEN
+                IF (v%bool) THEN
                     val = interp(e%then_branch, env)
                 ELSE
                     val = interp(e%else_branch, env)
@@ -159,11 +162,15 @@ CONTAINS
     !!! INTERP END
 
 
-    ! Now we can have executable code
-    ! print *, "Life is worth living"
+END MODULE A8
 
-    ! ... rest of program 
 
-END PROGRAM A8
+program main 
 
+    ! execute code here
+
+    print *, "Life is worth living"
+
+
+end program main
 
