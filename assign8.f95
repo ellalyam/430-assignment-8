@@ -164,12 +164,33 @@ CONTAINS
 
 END MODULE A8
 
+MODULE TEST
+    USE A8
+    IMPLICIT NONE
+
+CONTAINS
+    subroutine tests()
+     TYPE(numC) :: test_numC
+     TYPE(numC) :: test2_numC
+     test_numC%num = 5
+     if (test_numC%num /= 5) then
+        error stop "SHEQTRAN: numC error"
+     endif
+
+   end subroutine tests
+ 
+END MODULE TEST
+
 
 program main 
-
+    ! tell main to use the module A8
+    USE A8
+    USE TEST
     ! execute code here
+    call tests()
+     
+    print *, "main ran successfully"
 
-    print *, "Life is worth living"
 
 
 end program main
