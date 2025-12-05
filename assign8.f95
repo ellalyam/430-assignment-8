@@ -75,6 +75,14 @@ MODULE A8
         REAL :: num
     END TYPE numV
 
+    ! Closure value: stores parameters, body, and environment
+    TYPE, EXTENDS(Value) :: closureV
+        INTEGER :: num_params = 0
+        CHARACTER(LEN=16), DIMENSION(:), ALLOCATABLE :: params
+        CLASS(ExprC), ALLOCATABLE :: body
+        TYPE(Environment) :: env   ! Environment
+    END TYPE closureV
+
     ! Boolean 
     TYPE, EXTENDS(Value) :: boolV
         LOGICAL :: bool
